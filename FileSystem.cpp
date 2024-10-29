@@ -84,11 +84,32 @@ void FileSystem::deleteFile(const shared_ptr<FileNode> &parent, const string &fi
 
 void FileSystem::resizeFile(const shared_ptr<FileNode> &parent, const string &fileName, int newSize)
 {
-    auto file = searchFile(parent, fileName);
-    if (file)
+    auto fileNode = searchFile(parent, fileName);
+    if (fileNode && fileNode->isFile)
     {
-        file->fileSize = newSize;
-        updateIndex(); // Atualiza o índice
+        ofstream file(fileName, ios::binary | ios::in | ios::out);
+        if (!file)
+        {
+            cerr << "Erro ao abrir o arquivo " << fileName << " para redimensionamento.\n";
+            return;
+        }
+
+        // Redimensiona o arquivo
+        file.seekp(newSize - 1);
+        file.write("", 1);
+        file.close();
+
+        // Atualiza o tamanho do nó do arquivo
+        fileNode->fileSize = newSize;
+
+        // Atualiza o índice (defina sua lógica aqui)
+        updateIndex();
+
+        cout << "Arquivo '" << fileName << "' redimensionado para " << newSize << " bytes.\n";
+    }
+    else
+    {
+        cerr << "Arquivo '" << fileName << "' não encontrado.\n";
     }
 }
 
