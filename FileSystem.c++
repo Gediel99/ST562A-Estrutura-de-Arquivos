@@ -38,12 +38,20 @@
         cout << "Arquivo '" << fileName << "' criado com tamanho " << fileSize << " bytes.\n";
     }
 
-    void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fileName) {
-        for (int i = 0; i < parent->children.size(); i++) {
-            if (parent->children[i]->name == fileName) {
-                parent->children.erase(parent->children.begin() + i);
-                return;
+     void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fileName) {
+        auto it = remove_if(parent->children.begin(), parent->children.end(),
+                            [&](const shared_ptr<FileNode>& child) { return child->isFile && child->name == fileName; });
+
+        if (it != parent->children.end()) {
+            string path = (*it)->name;
+            if (remove(path.c_str()) == 0) {
+                parent->children.erase(it);
+                cout << "Arquivo '" << fileName << "' deletado.\n";
+            } else {
+                cerr << "Erro ao deletar o arquivo " << fileName << ".\n";
             }
+        } else {
+            cerr << "Arquivo '" << fileName << "' não encontrado.\n";
         }
     }
 
