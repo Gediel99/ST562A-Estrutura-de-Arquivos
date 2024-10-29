@@ -2,10 +2,14 @@
 
 void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fileName, int fileSize)
 {
+    if (!parent) {
+        cerr << "Erro: O pai não pode ser nulo.\n";
+        return;
+    }
+
     auto newFile = make_shared<FileNode>(fileName, true, fileSize);
     ofstream file(fileName, ios::binary);
-    if (!file)
-    {
+    if (!file) {
         cerr << "Erro ao criar o arquivo " << fileName << ".\n";
         return;
     }
@@ -21,34 +25,26 @@ void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fi
 
 void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fileName)
 {
-    if (parent == nullptr)
-    {
+    if (parent == nullptr) {
         cerr << "Erro: O pai não pode ser nulo.\n";
         return;
     }
 
     auto it = remove_if(parent->children.begin(), parent->children.end(),
-                        [&](const shared_ptr<FileNode>& child)
-                        {
-                            return child->isFile && child->name == fileName;
-                        });
+        [&](const shared_ptr<FileNode>& child) {
+            return child->isFile && child->name == fileName;
+        });
 
-    if (it != parent->children.end())
-    {
+    if (it != parent->children.end()) {
         string path = (*it)->name;
-        if (remove(path.c_str()) == 0)
-        {
-            parent->children.erase(it);
+        if (remove(path.c_str()) == 0) {
+            parent->children.erase(it, parent->children.end()); // Remove a partir de it até o final
             cout << "Arquivo '" << fileName << "' deletado.\n";
             removeFromIndex(fileName);
-        }
-        else
-        {
+        } else {
             cerr << "Erro ao deletar o arquivo " << fileName << ".\n";
         }
-    }
-    else
-    {
+    } else {
         cerr << "Arquivo '" << fileName << "' não encontrado.\n";
     }
 }
@@ -56,11 +52,9 @@ void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fi
 void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fileName, int newSize)
 {
     auto fileNode = searchFile(parent, fileName);
-    if (fileNode && fileNode->isFile)
-    {
+    if (fileNode && fileNode->isFile) {
         ofstream file(fileName, ios::binary | ios::in | ios::out);
-        if (!file)
-        {
+        if (!file) {
             cerr << "Erro ao abrir o arquivo " << fileName << " para redimensionamento.\n";
             return;
         }
@@ -75,19 +69,20 @@ void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fi
         updateIndex(); // Atualiza o índice
 
         cout << "Arquivo '" << fileName << "' redimensionado para " << newSize << " bytes.\n";
-    }
-    else
-    {
+    } else {
         cerr << "Arquivo '" << fileName << "' não encontrado.\n";
     }
 }
 
 shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode>& parent, const string& fileName)
 {
-    for (const auto& child : parent->children)
-    {
-        if (child->isFile && child->name == fileName)
-        {
+    if (!parent) {
+        cerr << "Erro: O pai não pode ser nulo.\n";
+        return nullptr;
+    }
+
+    for (const auto& child : parent->children) {
+        if (child->isFile && child->name == fileName) {
             cout << "Arquivo '" << fileName << "' encontrado com tamanho: " << child->fileSize << " bytes.\n";
             return child;
         }
@@ -99,20 +94,18 @@ shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode>& parent, 
 void FileSystem::loadIndex()
 {
     ifstream indexFile("index.txt");
-    if (!indexFile)
-    {
+    if (!indexFile) {
         cout << "Nenhum índice encontrado. Iniciando um novo.\n";
         return;
     }
 
     string line;
-    while (getline(indexFile, line))
-    {
+    while (getline(indexFile, line)) {
         size_t spacePos = line.find(' ');
         string fileName = line.substr(0, spacePos);
         int fileSize = stoi(line.substr(spacePos + 1));
         auto newFile = make_shared<FileNode>(fileName, true, fileSize);
-        root->children.push_back(newFile); // Adiciona ao root ou ao pai adequado
+        root->children.push_back(newFile);
     }
 }
 
@@ -128,18 +121,15 @@ void FileSystem::removeFromIndex(const string& fileName)
     vector<string> lines;
     string line;
 
-    while (getline(indexFile, line))
-    {
-        if (line.find(fileName) != 0) // Se a linha não começa com o nome do arquivo
-        {
+    while (getline(indexFile, line)) {
+        if (line.find(fileName) != 0) {
             lines.push_back(line);
         }
     }
     indexFile.close();
 
     ofstream outIndexFile("index.txt");
-    for (const auto& l : lines)
-    {
+    for (const auto& l : lines) {
         outIndexFile << l << endl;
     }
 }
@@ -147,10 +137,8 @@ void FileSystem::removeFromIndex(const string& fileName)
 void FileSystem::updateIndex()
 {
     ofstream outIndexFile("index.txt");
-    for (const auto& child : root->children)
-    {
-        if (child->isFile)
-        {
+    for (const auto& child : root->children) {
+        if (child->isFile) {
             outIndexFile << child->name << " " << child->fileSize << endl;
         }
     }
