@@ -30,19 +30,25 @@ void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fi
         return;
     }
 
-    auto it = remove_if(parent->children.begin(), parent->children.end(),
+    // Encontra o arquivo na lista de filhos
+    auto it = find_if(parent->children.begin(), parent->children.end(),
         [&](const shared_ptr<FileNode>& child) {
             return child->isFile && child->name == fileName;
         });
 
+    // Verifica se o arquivo foi encontrado
     if (it != parent->children.end()) {
-        string path = (*it)->name;
+        // Obtém o caminho completo do arquivo
+        string path = (*it)->name; // Altere aqui se o caminho completo for necessário
+        
+        // Tenta remover o arquivo do sistema
         if (remove(path.c_str()) == 0) {
-            parent->children.erase(it, parent->children.end()); // Remove a partir de it até o final
+            // Remove apenas o arquivo correspondente da lista de filhos
+            parent->children.erase(it);
             cout << "Arquivo '" << fileName << "' deletado.\n";
             removeFromIndex(fileName);
         } else {
-            cerr << "Erro ao deletar o arquivo " << fileName << ".\n";
+            cerr << "Erro ao deletar o arquivo " << fileName << ". Verifique se o arquivo existe e se você tem permissões adequadas.\n";
         }
     } else {
         cerr << "Arquivo '" << fileName << "' não encontrado.\n";
