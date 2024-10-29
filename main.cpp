@@ -12,11 +12,11 @@ int main() {
         std::cout << "2. Deletar Arquivo\n";
         std::cout << "3. Redimensionar Arquivo\n";
         std::cout << "4. Pesquisar Arquivo\n";
-        std::cout << "5. Criar Diretório\n";
-        std::cout << "6. Deletar Diretório\n";
-        std::cout << "7. Listar Conteúdo do Diretório\n";
+        std::cout << "5. Criar Diretorio\n";
+        std::cout << "6. Deletar Diretorio\n";
+        std::cout << "7. Listar Conteudo do Diretorio\n";
         std::cout << "0. Sair\n";
-        std::cout << "Escolha uma opção: ";
+        std::cout << "Escolha uma opcao: ";
         std::cin >> option;
 
         switch (option) {
@@ -49,13 +49,13 @@ int main() {
                 break;
 
             case 5:
-                std::cout << "Digite o nome do diretório a ser criado: ";
+                std::cout << "Digite o nome do diretorio a ser criado: ";
                 std::cin >> name;
                 fs.createDirectory(fs.root, name);
                 break;
 
             case 6:
-                std::cout << "Digite o nome do diretório a ser deletado: ";
+                std::cout << "Digite o nome do diretorio a ser deletado: ";
                 std::cin >> name;
                 fs.deleteDirectory(fs.root, name);
                 break;
@@ -69,7 +69,7 @@ int main() {
                 break;
 
             default:
-                std::cout << "Opção inválida! Tente novamente.\n";
+                std::cout << "Opcao invalida! Tente novamente.\n";
                 break;
         }
     } while (option != 0);
