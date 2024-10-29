@@ -37,6 +37,7 @@ void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fi
 
     if (it != parent->children.end()) {
         string path = (*it)->name;
+        
         if (remove(path.c_str()) == 0) {
             parent->children.erase(it);
             cout << "Arquivo '" << fileName << "' deletado.\n";
