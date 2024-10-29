@@ -115,13 +115,15 @@ void FileSystem::resizeFile(const shared_ptr<FileNode> &parent, const string &fi
 
 shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode> &parent, const string &fileName)
 {
-    for (auto &child : parent->children)
+    for (const auto &child : parent->children)
     {
-        if (child->name == fileName)
+        if (child->isFile && child->name == fileName)
         {
+            cout << "Arquivo '" << fileName << "' encontrado.\n";
             return child;
         }
     }
+    cout << "Arquivo '" << fileName << "' não encontrado.\n";
     return nullptr;
 }
 
@@ -203,6 +205,7 @@ int main()
         cout << "1. Criar Arquivo\n";
         cout << "2. Deletar Arquivo\n";
         cout << "3. Redimensionar Arquivo\n";
+        cout << "4. Pesquisar Arquivo\n";
         cout << "0. Sair\n";
         cout << "Escolha uma opção: ";
         cin >> option;
@@ -229,6 +232,12 @@ int main()
             cout << "Digite o novo tamanho do arquivo (em bytes): ";
             cin >> fileSize;
             fs.resizeFile(fs.root, fileName, fileSize);
+            break;
+        
+        case 4:
+            cout << "Digite o nome do arquivo a ser pesquisado: ";
+            cin >> fileName;
+            fs.searchFile(fs.root, fileName);
             break;
 
         case 0:
