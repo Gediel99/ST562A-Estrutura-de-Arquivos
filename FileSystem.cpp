@@ -30,20 +30,14 @@ void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fi
         return;
     }
 
-    // Encontra o arquivo na lista de filhos
     auto it = find_if(parent->children.begin(), parent->children.end(),
         [&](const shared_ptr<FileNode>& child) {
             return child->isFile && child->name == fileName;
         });
 
-    // Verifica se o arquivo foi encontrado
     if (it != parent->children.end()) {
-        // Obtém o caminho completo do arquivo
-        string path = (*it)->name; // Altere aqui se o caminho completo for necessário
-        
-        // Tenta remover o arquivo do sistema
+        string path = (*it)->name;
         if (remove(path.c_str()) == 0) {
-            // Remove apenas o arquivo correspondente da lista de filhos
             parent->children.erase(it);
             cout << "Arquivo '" << fileName << "' deletado.\n";
             removeFromIndex(fileName);
@@ -60,18 +54,16 @@ void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fi
     auto fileNode = searchFile(parent, fileName);
     if (fileNode && fileNode->isFile)
     {
-        // Verifica o tamanho atual do arquivo
-        ifstream file(fileName, ios::binary | ios::ate); // Abre o arquivo para leitura e obtém o tamanho
+        ifstream file(fileName, ios::binary | ios::ate);
         if (!file)
         {
             cerr << "Erro ao abrir o arquivo " << fileName << " para redimensionamento.\n";
             return;
         }
 
-        streamsize currentSize = file.tellg(); // Obtém o tamanho atual
-        file.close(); // Fecha o arquivo após obter o tamanho
+        streamsize currentSize = file.tellg();
+        file.close();
 
-        // Se o novo tamanho for menor, remove o conteúdo adicional
         if (newSize < currentSize)
         {
             ofstream file(fileName, ios::binary | ios::in | ios::out);
@@ -81,20 +73,17 @@ void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fi
                 return;
             }
 
-            // Ajusta o tamanho do arquivo
             file.seekp(newSize);
-            file.write("", 1); // Trunca o arquivo
+            file.write("", 1);
             file.close();
 
-            // Atualiza o tamanho do nó do arquivo
             fileNode->fileSize = newSize;
-            updateIndex(); // Atualiza o índice
+            updateIndex();
 
             cout << "Arquivo '" << fileName << "' redimensionado para " << newSize << " bytes.\n";
         }
         else if (newSize > currentSize)
         {
-            // Para aumentar o tamanho do arquivo, apenas preenche com zeros
             ofstream file(fileName, ios::binary | ios::in | ios::out);
             if (!file)
             {
@@ -103,12 +92,11 @@ void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fi
             }
 
             file.seekp(newSize - 1);
-            file.write("", 1); // Preenche com um byte nulo
+            file.write("", 1);
             file.close();
 
-            // Atualiza o tamanho do nó do arquivo
             fileNode->fileSize = newSize;
-            updateIndex(); // Atualiza o índice
+            updateIndex();
 
             cout << "Arquivo '" << fileName << "' redimensionado para " << newSize << " bytes.\n";
         }
@@ -122,7 +110,6 @@ void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fi
         cerr << "Arquivo '" << fileName << "' não encontrado.\n";
     }
 }
-
 
 shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode>& parent, const string& fileName)
 {
