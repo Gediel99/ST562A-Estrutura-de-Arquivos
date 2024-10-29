@@ -14,7 +14,7 @@ public:
 
     FileSystem() {
         root = make_shared<FileNode>("root", false);
-        loadIndex();
+        loadIndex();  // Carrega o índice ao iniciar
     }
 
     void createFile(const shared_ptr<FileNode>& parent, const string& fileName, int fileSize);
@@ -22,7 +22,9 @@ public:
     void resizeFile(const shared_ptr<FileNode>& parent, const string& fileName, int newSize);
     shared_ptr<FileNode> searchFile(const shared_ptr<FileNode>& parent, const string& fileName);
     void loadIndex();
-    void updateIndex(const string& operation, const string& fileName, int fileSize = 0);
+    void updateIndex();
+    void addToIndex(const string& fileName, int fileSize);
+    void removeFromIndex(const string& fileName);
 };
 
 void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fileName, int fileSize) {
@@ -39,7 +41,7 @@ void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fi
     newFile->parent = parent;
     parent->children.push_back(newFile);
     cout << "Arquivo '" << fileName << "' criado com tamanho " << fileSize << " bytes.\n";
-    updateIndex("create", fileName, fileSize);  // Atualiza o índice
+    addToIndex(fileName, fileSize);  // Atualiza o índice
 }
 
 void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fileName) {
@@ -53,7 +55,7 @@ void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fi
         if (remove(path.c_str()) == 0) {
             parent->children.erase(it);
             cout << "Arquivo '" << fileName << "' deletado.\n";
-            updateIndex("delete", fileName);  // Atualiza o índice
+            removeFromIndex(fileName);  // Atualiza o índice
         } else {
             cerr << "Erro ao deletar o arquivo " << fileName << ".\n";
         }
@@ -66,7 +68,7 @@ void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fi
     auto file = searchFile(parent, fileName);
     if (file) {
         file->fileSize = newSize;
-        updateIndex("resize", fileName, newSize);  // Atualiza o índice
+        updateIndex();  // Atualiza o índice
     }
 }
 
@@ -97,15 +99,39 @@ void FileSystem::loadIndex() {
     }
 }
 
-void FileSystem::updateIndex(const string& operation, const string& fileName, int fileSize) {
+void FileSystem::addToIndex(const string& fileName, int fileSize) {
     ofstream indexFile("index.txt", ios::app);
-    if (operation == "create") {
-        indexFile << fileName << " " << fileSize << endl;
-    } else if (operation == "delete") {
-        // Você precisaria de lógica para remover a linha do arquivo, pfv?
-    cout << "Arquivo '" << fileName << "' removido do índice.\n";
-    } else if (operation == "resize") {
-        // Você precisaria de lógica para atualizar o tamanho no índice
+    indexFile << fileName << " " << fileSize << endl;
+}
+
+void FileSystem::removeFromIndex(const string& fileName) {
+    // Lê todas as entradas existentes
+    ifstream indexFile("index.txt");
+    vector<string> lines;
+    string line;
+
+    // Adiciona as linhas ao vetor, exceto a que deve ser removida
+    while (getline(indexFile, line)) {
+        if (line.find(fileName) != 0) { // Se a linha não começa com o nome do arquivo
+            lines.push_back(line);
+        }
+    }
+    indexFile.close();
+
+    // Escreve de volta o arquivo de índice
+    ofstream outIndexFile("index.txt");
+    for (const auto& l : lines) {
+        outIndexFile << l << endl;
+    }
+}
+
+void FileSystem::updateIndex() {
+    // Para redimensionar um arquivo, você precisará reescrever o índice
+    ofstream outIndexFile("index.txt");
+    for (const auto& child : root->children) {
+        if (child->isFile) {
+            outIndexFile << child->name << " " << child->fileSize << endl;
+        }
     }
 }
 
