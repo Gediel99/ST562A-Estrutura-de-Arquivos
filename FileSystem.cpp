@@ -1,0 +1,161 @@
+#include <iostream>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include "FileNode.c++"
+
+using namespace std;
+
+class FileSystem {
+public:
+    shared_ptr<FileNode> root;
+
+    FileSystem() {
+        root = make_shared<FileNode>("root", false);
+        loadIndex();
+    }
+
+    void createFile(const shared_ptr<FileNode>& parent, const string& fileName, int fileSize);
+    void deleteFile(const shared_ptr<FileNode>& parent, const string& fileName);
+    void resizeFile(const shared_ptr<FileNode>& parent, const string& fileName, int newSize);
+    shared_ptr<FileNode> searchFile(const shared_ptr<FileNode>& parent, const string& fileName);
+    void loadIndex();
+    void updateIndex(const string& operation, const string& fileName, int fileSize = 0);
+};
+
+void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fileName, int fileSize) {
+    auto newFile = make_shared<FileNode>(fileName, true, fileSize);
+    ofstream file(fileName, ios::binary);
+    if (!file) {
+        cerr << "Erro ao criar o arquivo " << fileName << ".\n";
+        return;
+    }
+    file.seekp(fileSize - 1);
+    file.write("", 1);
+    file.close();
+
+    newFile->parent = parent;
+    parent->children.push_back(newFile);
+    cout << "Arquivo '" << fileName << "' criado com tamanho " << fileSize << " bytes.\n";
+    updateIndex("create", fileName, fileSize);  // Atualiza o índice
+}
+
+void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fileName) {
+    auto it = remove_if(parent->children.begin(), parent->children.end(),
+                        [&](const shared_ptr<FileNode>& child) {
+                            return child->isFile && child->name == fileName;
+                        });
+
+    if (it != parent->children.end()) {
+        string path = (*it)->name;
+        if (remove(path.c_str()) == 0) {
+            parent->children.erase(it);
+            cout << "Arquivo '" << fileName << "' deletado.\n";
+            updateIndex("delete", fileName);  // Atualiza o índice
+        } else {
+            cerr << "Erro ao deletar o arquivo " << fileName << ".\n";
+        }
+    } else {
+        cerr << "Arquivo '" << fileName << "' não encontrado.\n";
+    }
+}
+
+void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fileName, int newSize) {
+    auto file = searchFile(parent, fileName);
+    if (file) {
+        file->fileSize = newSize;
+        updateIndex("resize", fileName, newSize);  // Atualiza o índice
+    }
+}
+
+shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode>& parent, const string& fileName) {
+    for (auto& child : parent->children) {
+        if (child->name == fileName) {
+            return child;
+        }
+    }
+    return nullptr;
+}
+
+void FileSystem::loadIndex() {
+    ifstream indexFile("index.txt");
+    if (!indexFile) {
+        cout << "Nenhum índice encontrado. Iniciando um novo.\n";
+        return;
+    }
+
+    string line;
+    while (getline(indexFile, line)) {
+        // Supondo que o formato seja: nome tamanho
+        size_t spacePos = line.find(' ');
+        string fileName = line.substr(0, spacePos);
+        int fileSize = stoi(line.substr(spacePos + 1));
+        auto newFile = make_shared<FileNode>(fileName, true, fileSize);
+        root->children.push_back(newFile);  // Adiciona ao root ou ao pai adequado
+    }
+}
+
+void FileSystem::updateIndex(const string& operation, const string& fileName, int fileSize) {
+    ofstream indexFile("index.txt", ios::app);
+    if (operation == "create") {
+        indexFile << fileName << " " << fileSize << endl;
+    } else if (operation == "delete") {
+        // Você precisaria de lógica para remover a linha do arquivo, pfv?
+    cout << "Arquivo '" << fileName << "' removido do índice.\n";
+    } else if (operation == "resize") {
+        // Você precisaria de lógica para atualizar o tamanho no índice
+    }
+}
+
+int main() {
+    FileSystem fs;
+    int option;
+    string fileName;
+    int fileSize;
+
+    do {
+        cout << "\nMenu do Sistema de Arquivos:\n";
+        cout << "1. Criar Arquivo\n";
+        cout << "2. Deletar Arquivo\n";
+        cout << "3. Redimensionar Arquivo\n";
+        cout << "0. Sair\n";
+        cout << "Escolha uma opção: ";
+        cin >> option;
+
+        switch (option) {
+        case 1:
+            cout << "Digite o nome do arquivo: ";
+            cin >> fileName;
+            cout << "Digite o tamanho do arquivo (em bytes): ";
+            cin >> fileSize;
+            fs.createFile(fs.root, fileName, fileSize);
+            break;
+
+        case 2:
+            cout << "Digite o nome do arquivo a ser deletado: ";
+            cin >> fileName;
+            fs.deleteFile(fs.root, fileName);
+            break;
+
+        case 3:
+            cout << "Digite o nome do arquivo a ser redimensionado: ";
+            cin >> fileName;
+            cout << "Digite o novo tamanho do arquivo (em bytes): ";
+            cin >> fileSize;
+            fs.resizeFile(fs.root, fileName, fileSize);
+            break;
+
+        case 0:
+            cout << "Saindo do programa.\n";
+            break;
+
+        default:
+            cout << "Opção inválida! Tente novamente.\n";
+            break;
+        }
+    } while (option != 0);
+
+    return 0;
+}
