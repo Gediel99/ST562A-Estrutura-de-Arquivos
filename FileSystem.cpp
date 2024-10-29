@@ -1,6 +1,6 @@
 #include "FileSystem.h"
 
-void FileSystem::createFile(const shared_ptr<FileNode> &parent, const string &fileName, int fileSize)
+void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fileName, int fileSize)
 {
     auto newFile = make_shared<FileNode>(fileName, true, fileSize);
     ofstream file(fileName, ios::binary);
@@ -16,10 +16,10 @@ void FileSystem::createFile(const shared_ptr<FileNode> &parent, const string &fi
     newFile->parent = parent;
     parent->children.push_back(newFile);
     cout << "Arquivo '" << fileName << "' criado com tamanho " << fileSize << " bytes.\n";
-    addToIndex(fileName, fileSize); // Atualiza o índice
+    addToIndex(fileName, fileSize);
 }
 
-void FileSystem::deleteFile(const shared_ptr<FileNode> &parent, const string &fileName)
+void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fileName)
 {
     if (parent == nullptr)
     {
@@ -28,7 +28,7 @@ void FileSystem::deleteFile(const shared_ptr<FileNode> &parent, const string &fi
     }
 
     auto it = remove_if(parent->children.begin(), parent->children.end(),
-                        [&](const shared_ptr<FileNode> &child)
+                        [&](const shared_ptr<FileNode>& child)
                         {
                             return child->isFile && child->name == fileName;
                         });
@@ -40,7 +40,7 @@ void FileSystem::deleteFile(const shared_ptr<FileNode> &parent, const string &fi
         {
             parent->children.erase(it);
             cout << "Arquivo '" << fileName << "' deletado.\n";
-            removeFromIndex(fileName); // Atualiza o índice
+            removeFromIndex(fileName);
         }
         else
         {
@@ -53,7 +53,7 @@ void FileSystem::deleteFile(const shared_ptr<FileNode> &parent, const string &fi
     }
 }
 
-void FileSystem::resizeFile(const shared_ptr<FileNode> &parent, const string &fileName, int newSize)
+void FileSystem::resizeFile(const shared_ptr<FileNode>& parent, const string& fileName, int newSize)
 {
     auto fileNode = searchFile(parent, fileName);
     if (fileNode && fileNode->isFile)
@@ -65,10 +65,12 @@ void FileSystem::resizeFile(const shared_ptr<FileNode> &parent, const string &fi
             return;
         }
 
+        // Redimensiona o arquivo
         file.seekp(newSize - 1);
         file.write("", 1);
         file.close();
 
+        // Atualiza o tamanho do nó do arquivo
         fileNode->fileSize = newSize;
         updateIndex(); // Atualiza o índice
 
@@ -90,7 +92,7 @@ shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode>& parent, 
             return child;
         }
     }
-    cout << "Arquivo '" << fileName << "' não encontrado.\n";
+    cerr << "Arquivo '" << fileName << "' não encontrado.\n";
     return nullptr;
 }
 
@@ -114,13 +116,13 @@ void FileSystem::loadIndex()
     }
 }
 
-void FileSystem::addToIndex(const string &fileName, int fileSize)
+void FileSystem::addToIndex(const string& fileName, int fileSize)
 {
     ofstream indexFile("index.txt", ios::app);
     indexFile << fileName << " " << fileSize << endl;
 }
 
-void FileSystem::removeFromIndex(const string &fileName)
+void FileSystem::removeFromIndex(const string& fileName)
 {
     ifstream indexFile("index.txt");
     vector<string> lines;
@@ -136,7 +138,7 @@ void FileSystem::removeFromIndex(const string &fileName)
     indexFile.close();
 
     ofstream outIndexFile("index.txt");
-    for (const auto &l : lines)
+    for (const auto& l : lines)
     {
         outIndexFile << l << endl;
     }
@@ -145,7 +147,7 @@ void FileSystem::removeFromIndex(const string &fileName)
 void FileSystem::updateIndex()
 {
     ofstream outIndexFile("index.txt");
-    for (const auto &child : root->children)
+    for (const auto& child : root->children)
     {
         if (child->isFile)
         {
