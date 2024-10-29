@@ -113,19 +113,20 @@ void FileSystem::resizeFile(const shared_ptr<FileNode> &parent, const string &fi
     }
 }
 
-shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode> &parent, const string &fileName)
+shared_ptr<FileNode> FileSystem::searchFile(const shared_ptr<FileNode>& parent, const string& fileName)
 {
-    for (const auto &child : parent->children)
+    for (const auto& child : parent->children)
     {
         if (child->isFile && child->name == fileName)
         {
-            cout << "Arquivo '" << fileName << "' encontrado.\n";
+            cout << "Arquivo '" << fileName << "' encontrado com tamanho: " << child->fileSize << " bytes.\n";
             return child;
         }
     }
     cout << "Arquivo '" << fileName << "' não encontrado.\n";
     return nullptr;
 }
+
 
 void FileSystem::loadIndex()
 {
