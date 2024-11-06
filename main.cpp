@@ -54,17 +54,17 @@ int main()
         case 5:
             std::cout << "Digite o nome do diretorio a ser criado: ";
             std::cin >> name;
-            // fs.createDirectory(fs.root, name);
+            fs.createDirectory(fs.root, name);
             break;
 
         case 6:
             std::cout << "Digite o nome do diretorio a ser deletado: ";
             std::cin >> name;
-            // fs.deleteDirectory(fs.root, name);
+            fs.deleteDirectory(fs.root, name);
             break;
 
         case 7:
-            // fs.listDirectory(fs.root);
+            fs.listDirectory(fs.root);
             break;
 
         case 0:

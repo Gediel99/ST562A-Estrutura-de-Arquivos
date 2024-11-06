@@ -20,7 +20,7 @@ void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fi
     newFile->parent = parent;
     parent->children.push_back(newFile);
     cout << "Arquivo '" << fileName << "' criado com tamanho " << fileSize << " bytes.\n";
-    addToIndex(fileName, fileSize);
+    addToIndex(fileName, fileSize, true);
 }
 
 void FileSystem::deleteFile(const shared_ptr<FileNode>& parent, const string& fileName)
@@ -140,17 +140,18 @@ void FileSystem::loadIndex()
     string line;
     while (getline(indexFile, line)) {
         size_t spacePos = line.find(' ');
+        size_t spacePos2 = line.find(' ', spacePos + 1);
         string fileName = line.substr(0, spacePos);
-        int fileSize = stoi(line.substr(spacePos + 1));
-        auto newFile = make_shared<FileNode>(fileName, true, fileSize);
+        char type = line[spacePos + 1];
+        int fileSize = (type == 'f') ? stoi(line.substr(spacePos2 + 1)) : 0;
+        auto newFile = make_shared<FileNode>(fileName, type == 'f', fileSize);        
         root->children.push_back(newFile);
     }
 }
 
-void FileSystem::addToIndex(const string& fileName, int fileSize)
-{
+void FileSystem::addToIndex(const string& name, int size, bool isFile) {
     ofstream indexFile("index.txt", ios::app);
-    indexFile << fileName << " " << fileSize << endl;
+    indexFile << name << " " << (isFile ? 'f' : 'd') << " " << size << endl;
 }
 
 void FileSystem::removeFromIndex(const string& fileName)
@@ -178,6 +179,85 @@ void FileSystem::updateIndex()
     for (const auto& child : root->children) {
         if (child->isFile) {
             outIndexFile << child->name << " " << child->fileSize << endl;
+        }
+    }
+}
+
+void FileSystem::createDirectory(const shared_ptr<FileNode>& parent, const string& dirName)
+{
+    if (!parent) {
+        cerr << "Erro: O diretório pai não foi especificado.\n";
+        return;
+    }
+
+    auto existingNode = find_if(parent->children.begin(), parent->children.end(),
+        [&](const shared_ptr<FileNode>& child) {
+            return child->name == dirName;
+        });
+
+    if (existingNode != parent->children.end()) {
+        cerr << "Erro: Já existe um arquivo ou diretório com o nome '" << dirName << "'.\n";
+        return;
+    }
+
+    if (mkdir(dirName.c_str()) != 0) {
+        cerr << "Erro ao criar o diretório '" << dirName << "'.\n";
+        return;
+    }
+
+    auto newDir = make_shared<FileNode>(dirName, false);
+    newDir->parent = parent;
+    parent->children.push_back(newDir);
+    addToIndex(dirName, 0, false); 
+
+    cout << "Diretório '" << dirName << "' criado com sucesso.\n";
+}
+
+void FileSystem::deleteDirectory(const shared_ptr<FileNode>& parent, const string& dirName)
+{
+    if (parent == nullptr) {
+        cerr << "Erro: O diretório pai não foi especificado.\n";
+        return;
+    }
+
+    auto it = find_if(parent->children.begin(), parent->children.end(),
+        [&](const shared_ptr<FileNode>& child) {
+            return !child->isFile && child->name == dirName;
+        });
+
+    if (it != parent->children.end()) {
+        string path = (*it)->name;
+
+        if (rmdir(path.c_str()) == 0) {
+            parent->children.erase(it);
+            removeFromIndex(dirName); 
+            cout << "Diretório '" << dirName << "' deletado com sucesso.\n";
+        } else {
+            cerr << "Erro ao deletar o diretório '" << dirName << "'. Verifique se ele está vazio ou as permissões.\n";
+        }
+    } else {
+        cerr << "Diretório '" << dirName << "' não encontrado.\n";
+    }
+}
+
+void FileSystem::listDirectory(const shared_ptr<FileNode>& dir)
+{
+    if (!dir) {
+        cerr << "Erro: O diretório não foi especificado.\n";
+        return;
+    }
+
+    if (dir->children.empty()) {
+        cout << "O diretório '" << dir->name << "' está vazio.\n";
+        return;
+    }
+
+    cout << "Conteúdo do diretório '" << dir->name << "':\n";
+    for (const auto& child : dir->children) {
+        if (child->isFile) {
+            cout << "[Arquivo] " << child->name << " (" << child->fileSize << " bytes)\n";
+        } else {
+            cout << "[Diretório] " << child->name << "\n";
         }
     }
 }
