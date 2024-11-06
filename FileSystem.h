@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <sys/stat.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -28,7 +30,7 @@ public:
     void deleteDirectory(const shared_ptr<FileNode>& parent, const string& dirName);// to do
     void loadIndex();
     void updateIndex();
-    void addToIndex(const string& fileName, int fileSize);
+    void addToIndex(const string& fileName, int fileSize, bool isFile);
     void removeFromIndex(const string& fileName);
     void listDirectory(const shared_ptr<FileNode>& dir); //to do
 };
