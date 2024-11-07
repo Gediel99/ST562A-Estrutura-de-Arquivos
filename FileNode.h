@@ -8,13 +8,15 @@
 class FileNode {
 public:
     std::string name;
-    bool isFile; 
-    int fileSize; 
-    std::shared_ptr<FileNode> parent; 
-    std::vector<std::shared_ptr<FileNode>> children; 
+    bool isFile;
+    int fileSize;
+    std::shared_ptr<FileNode> parent;
+    std::vector<std::shared_ptr<FileNode>> children;
 
-    FileNode(const std::string& name, bool isFile, int fileSize = 0)
-        : name(name), isFile(isFile), fileSize(fileSize), parent(nullptr) {}
+    FileNode(const std::string& name, bool isFile, int fileSize = 0);
+
+    // Declare the appendContent method in the class header
+    void appendContent(const std::string &content); 
 };
 
 #endif

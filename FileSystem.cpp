@@ -1,4 +1,5 @@
 #include "FileSystem.h"
+#include "FileNode.h"
 
 void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fileName, int fileSize)
 {
@@ -7,8 +8,10 @@ void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fi
         return;
     }
 
+    string filePath = parent->name + "/" + fileName;
+
     auto newFile = make_shared<FileNode>(fileName, true, fileSize);
-    ofstream file(fileName, ios::binary);
+    ofstream file(filePath, ios::binary);
     if (!file) {
         cerr << "Erro ao criar o arquivo " << fileName << ".\n";
         return;
@@ -17,9 +20,10 @@ void FileSystem::createFile(const shared_ptr<FileNode>& parent, const string& fi
     file.write("", 1);
     file.close();
 
-    newFile->parent = parent;
     parent->children.push_back(newFile);
-    cout << "Arquivo '" << fileName << "' criado com tamanho " << fileSize << " bytes.\n";
+    newFile->parent = parent;
+    
+    cout << "Arquivo '" << fileName << " Pai:" << parent << "' criado com tamanho " << fileSize << " bytes.\n";
     addToIndex(fileName, fileSize, true);
 }
 
@@ -261,3 +265,51 @@ void FileSystem::listDirectory(const shared_ptr<FileNode>& dir)
         }
     }
 }
+
+void FileSystem::changeDirectory(const std::string& dirName, std::shared_ptr<FileNode> &currentDirectory) {
+    if (dirName == ".." && currentDirectory->parent) {
+        currentDirectory = currentDirectory->parent;
+        std::cout << "Subindo um nivel.\n";
+    } else {
+        for (const auto& child : currentDirectory->children) {
+            if (!child->isFile && child->name == dirName) {
+                currentDirectory = child;
+                std::cout << "Diretorio alterado para: " << currentDirectory->name << "\n";
+                return;
+            }
+        }
+        std::cout << "Diretorio nao encontrado. \n";
+    }
+}
+
+void FileSystem::editFileContent(const std::string& fileName, const std::string& content) {
+    auto fileNode = searchFile(currentDirectory, fileName);
+    if (fileNode && fileNode->isFile) {
+        fileNode->appendContent(content);
+        std::cout << "Conteúdo adicionado ao arquivo '" << fileName << "'.\n";
+    } else {
+        std::cout << "Arquivo não encontrado ou não é um arquivo de texto.\n";
+    }
+}
+void FileNode::appendContent(const std::string &content)
+{
+    if (isFile)
+    {
+        std::ofstream file(name, std::ios::app);
+        if (file.is_open()) {
+            file << content;
+            fileSize += content.size();
+            file.close();
+        }
+        else {
+            std::cout << "Erro ao abrir o arquivo " << name << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "Não é um arquivo, não pode adicionar conteúdo!" << std::endl;
+    }
+}
+
+FileNode::FileNode(const std::string& name, bool isFile, int fileSize)
+    : name(name), isFile(isFile), fileSize(fileSize) {}
